@@ -5,22 +5,27 @@
 
 import 'dotenv/config'
 import { GoogleGenAI } from '@google/genai'
+import { extractText, withRetry } from './utils.ts'
 
 const PROMPT = '지금 이 demo 폴더 안에 어떤 .ts 파일들이 있는지 알려줘.'
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
 async function main() {
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: PROMPT,
-  })
+  const response = await withRetry(
+    () =>
+      ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: PROMPT,
+      }),
+    'step1 generateContent',
+  )
 
   console.log('--- Prompt ---')
   console.log(PROMPT)
 
   console.log('\n--- Model response ---')
-  console.log(response.text)
+  console.log(extractText(response))
 
   console.log('\n--- finishReason ---', response.candidates?.[0]?.finishReason)
   console.log('--- usageMetadata ---', response.usageMetadata)

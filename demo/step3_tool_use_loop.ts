@@ -13,6 +13,7 @@ import {
   type FunctionDeclaration,
   type Part,
 } from '@google/genai'
+import { extractText, withRetry } from './utils.ts'
 
 const PROMPT =
   '이 demo 폴더의 step 파일들이 각각 어떤 일을 하는지 한 줄씩 정리해줘.'
@@ -75,21 +76,25 @@ async function main() {
   const contents: Content[] = [{ role: 'user', parts: [{ text: PROMPT }] }]
 
   for (let turn = 1; turn <= MAX_TURNS; turn++) {
-    const res = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents,
-      config: {
-        tools: [{ functionDeclarations: tools }],
-        automaticFunctionCalling: { disable: true },
-      },
-    })
+    const res = await withRetry(
+      () =>
+        ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents,
+          config: {
+            tools: [{ functionDeclarations: tools }],
+            automaticFunctionCalling: { disable: true },
+          },
+        }),
+      `turn ${turn}`,
+    )
 
     console.log(
       `\n=== Turn ${turn} (finishReason: ${res.candidates?.[0]?.finishReason}) ===`,
     )
 
-    const text = res.text
-    if (text && text.trim()) {
+    const text = extractText(res)
+    if (text.trim()) {
       console.log(`[assistant text] ${text}`)
     }
 

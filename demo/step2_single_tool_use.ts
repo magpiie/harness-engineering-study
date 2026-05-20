@@ -13,6 +13,7 @@ import {
   type FunctionDeclaration,
   type Part,
 } from '@google/genai'
+import { extractText, withRetry } from './utils.ts'
 
 const PROMPT = '지금 이 demo 폴더 안에 어떤 .ts 파일들이 있는지 알려줘.'
 
@@ -55,21 +56,25 @@ async function main() {
   const contents: Content[] = [{ role: 'user', parts: [{ text: PROMPT }] }]
 
   // 1) 첫 호출 — 도구를 노출하여 모델이 부르도록 유도
-  const first = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents,
-    config: {
-      tools: [{ functionDeclarations: [listDirectory] }],
-      automaticFunctionCalling: { disable: true },
-    },
-  })
+  const first = await withRetry(
+    () =>
+      ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents,
+        config: {
+          tools: [{ functionDeclarations: [listDirectory] }],
+          automaticFunctionCalling: { disable: true },
+        },
+      }),
+    'turn 1',
+  )
 
   console.log('\n--- Turn 1 finishReason ---', first.candidates?.[0]?.finishReason)
 
   const calls = first.functionCalls ?? []
   if (calls.length === 0) {
     console.log('\n--- Model response (no tool was called) ---')
-    console.log(first.text)
+    console.log(extractText(first))
     return
   }
 
@@ -95,18 +100,22 @@ async function main() {
     ] as Part[],
   })
 
-  const second = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents,
-    config: {
-      tools: [{ functionDeclarations: [listDirectory] }],
-      automaticFunctionCalling: { disable: true },
-    },
-  })
+  const second = await withRetry(
+    () =>
+      ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents,
+        config: {
+          tools: [{ functionDeclarations: [listDirectory] }],
+          automaticFunctionCalling: { disable: true },
+        },
+      }),
+    'turn 2',
+  )
 
   console.log('\n--- Turn 2 finishReason ---', second.candidates?.[0]?.finishReason)
   console.log('--- Final model response ---')
-  console.log(second.text)
+  console.log(extractText(second))
 
   // 모델이 추가 도구를 호출했어도 Step 2는 1회로 끝 (루프는 Step 3)
   const more = second.functionCalls ?? []
