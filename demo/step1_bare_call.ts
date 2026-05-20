@@ -4,31 +4,26 @@
 // 이 한계가 Step 2부터 도구·루프를 붙여야 하는 이유다.
 
 import 'dotenv/config'
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenAI } from '@google/genai'
 
 const PROMPT = '지금 이 demo 폴더 안에 어떤 .ts 파일들이 있는지 알려줘.'
 
-const client = new Anthropic()
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
 async function main() {
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: PROMPT }],
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: PROMPT,
   })
 
   console.log('--- Prompt ---')
   console.log(PROMPT)
 
   console.log('\n--- Model response ---')
-  for (const block of response.content) {
-    if (block.type === 'text') {
-      console.log(block.text)
-    }
-  }
+  console.log(response.text)
 
-  console.log('\n--- stop_reason ---', response.stop_reason)
-  console.log('--- usage ---', response.usage)
+  console.log('\n--- finishReason ---', response.candidates?.[0]?.finishReason)
+  console.log('--- usageMetadata ---', response.usageMetadata)
 }
 
 main().catch((err) => {
