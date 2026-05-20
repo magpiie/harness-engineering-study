@@ -42,3 +42,6 @@ Thumbs.db
 
 # Private notes (not for public sharing)
 docs/02-presentation-tips.md
+
+# Demo auto-memory (사용자별 실행 결과, 추적 안 함)
+demo/memory/
