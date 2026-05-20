@@ -1,0 +1,22 @@
+{
+  "name": "harness-engineering-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "step1": "tsx step1_bare_call.ts",
+    "step2": "tsx step2_single_tool_use.ts",
+    "step3": "tsx step3_tool_use_loop.ts",
+    "step4": "tsx step4_with_memory.ts",
+    "step5": "tsx step5_with_agent_sdk.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.97.1",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  }
+}
